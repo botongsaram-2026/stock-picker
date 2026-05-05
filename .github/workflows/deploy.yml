@@ -42,8 +42,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          # ↓ Cloudflare Pages 대시보드에서 생성한 프로젝트 이름과 동일하게 수정
-          projectName: valuecheck
+          projectName: stock-picker
           directory: frontend/dist
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
           # 브랜치명을 Cloudflare에 전달해 Preview/Production 자동 구분
