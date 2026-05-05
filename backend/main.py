@@ -5,14 +5,18 @@ import pandas as pd
 from datetime import datetime, timedelta
 import math
 
+from routers.ai import router as ai_router
+
 app = FastAPI(title="밸류체크 API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origin_regex=r"http://localhost:\d+",  # Vite dev 포트 전체 허용
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(ai_router, prefix="/api/ai")
 
 # ──────────────────────────────────────────
 # 섹터별 대표 종목 (미국 / 한국 분리)

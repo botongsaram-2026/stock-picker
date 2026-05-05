@@ -8,53 +8,48 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { METRIC_CONFIGS, METRIC_KEYS, calcScore, formatMetric } from "../utils/metrics";
+import {
+  METRIC_CONFIGS,
+  METRIC_KEYS,
+  formatMetric,
+  normalizeForChart,
+} from "../utils/metrics";
 
 function buildData(stockData, sectorAverages) {
-  return METRIC_KEYS.map((key) => {
-    const stockVal = stockData?.[key];
-    const sectorVal = sectorAverages?.[key];
-    const score = calcScore(key, stockVal, sectorVal) ?? 0;
-    return {
-      metric: METRIC_CONFIGS[key].label,
-      종목: Math.round(score * 10) / 10,
-      섹터평균: 50,
-      _stockRaw: formatMetric(key, stockVal),
-      _sectorRaw: formatMetric(key, sectorVal),
-    };
-  });
+  return METRIC_KEYS.map((key) => ({
+    metric:    METRIC_CONFIGS[key].label,
+    이_종목:   Math.round(normalizeForChart(key, stockData?.[key]) * 10) / 10,
+    업계_평균: Math.round(normalizeForChart(key, sectorAverages?.[key]) * 10) / 10,
+    _stockRaw:  formatMetric(key, stockData?.[key]),
+    _sectorRaw: formatMetric(key, sectorAverages?.[key]),
+  }));
 }
 
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   const d = payload[0]?.payload;
   return (
-    <div
-      style={{
-        backgroundColor: "#1e293b",
-        border: "1px solid #334155",
-        borderRadius: 8,
-        padding: "8px 12px",
-        fontSize: 12,
-      }}
-    >
-      <p style={{ color: "#f1f5f9", fontWeight: 700, marginBottom: 4 }}>{label}</p>
+    <div style={{
+      background: "#1e293b", border: "1px solid #334155",
+      borderRadius: 10, padding: "8px 12px", fontSize: 12,
+    }}>
+      <p style={{ color: "#f1f5f9", fontWeight: 700, marginBottom: 6 }}>{label}</p>
       <p style={{ color: "#60a5fa" }}>
-        종목&nbsp;&nbsp;&nbsp;{d?._stockRaw}&nbsp;
-        <span style={{ color: "#94a3b8" }}>(점수 {d?.["종목"]})</span>
+        🔵 이 종목&nbsp;&nbsp;{d?._stockRaw}
+        <span style={{ color: "#64748b" }}> (점수 {d?.["이_종목"]})</span>
       </p>
-      <p style={{ color: "#94a3b8" }}>
-        섹터 평균&nbsp;{d?._sectorRaw}&nbsp;
-        <span style={{ color: "#64748b" }}>(점수 50)</span>
+      <p style={{ color: "#fb923c" }}>
+        🟠 업계 평균&nbsp;{d?._sectorRaw}
+        <span style={{ color: "#64748b" }}> (점수 {d?.["업계_평균"]})</span>
       </p>
     </div>
   );
 }
 
 /**
- * 지표 레이더 차트
- * - 섹터 평균을 항상 50점으로 고정 → 정오각형 기준선
- * - 종목 점수가 50 초과면 섹터 평균보다 유리
+ * RadarChart
+ * 이 종목(🔵 파란색) vs 업계 평균(🟠 주황색)
+ * 5개 지표를 0–100 정규화 후 표시
  */
 export default function RadarChart({ stockData, sectorAverages }) {
   const data = buildData(stockData, sectorAverages);
@@ -66,13 +61,13 @@ export default function RadarChart({ stockData, sectorAverages }) {
           지표 레이더
         </h4>
         <p className="text-xs text-slate-500 mt-1">
-          섹터 평균 대비 상대 점수 · 50점 = 섹터 평균
+          각 지표를 0–100점으로 환산 · 높을수록 우수
         </p>
       </div>
 
-      <ResponsiveContainer width="100%" height={310}>
-        <RechartsRadar cx="50%" cy="50%" outerRadius="72%" data={data}>
-          <PolarGrid stroke="#1e3a5f" strokeDasharray="0" />
+      <ResponsiveContainer width="100%" height={300}>
+        <RechartsRadar cx="50%" cy="50%" outerRadius="70%" data={data}>
+          <PolarGrid stroke="#1e3a5f" />
           <PolarAngleAxis
             dataKey="metric"
             tick={{ fill: "#94a3b8", fontSize: 12, fontWeight: 600 }}
@@ -85,24 +80,24 @@ export default function RadarChart({ stockData, sectorAverages }) {
             axisLine={false}
           />
 
-          {/* 섹터 평균: 항상 50점 → 정오각형 기준선 */}
+          {/* 업계 평균 — 주황색 */}
           <Radar
-            name="섹터 평균"
-            dataKey="섹터평균"
-            stroke="#64748b"
-            fill="#64748b"
-            fillOpacity={0.08}
-            strokeDasharray="4 4"
-            strokeWidth={1.5}
+            name="업계 평균"
+            dataKey="업계_평균"
+            stroke="#f97316"
+            fill="#f97316"
+            fillOpacity={0.12}
+            strokeDasharray="4 3"
+            strokeWidth={1.8}
           />
 
-          {/* 종목 */}
+          {/* 이 종목 — 파란색 */}
           <Radar
-            name="종목"
-            dataKey="종목"
+            name="이 종목"
+            dataKey="이_종목"
             stroke="#3b82f6"
             fill="#3b82f6"
-            fillOpacity={0.22}
+            fillOpacity={0.25}
             strokeWidth={2}
           />
 
