@@ -11,7 +11,11 @@ app = FastAPI(title="밸류체크 API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=r"http://localhost:\d+",  # Vite dev 포트 전체 허용
+    allow_origin_regex=(
+        r"http://localhost:\d+"           # 로컬 개발
+        r"|https://.*\.pages\.dev"        # Cloudflare Pages (모든 서브도메인)
+        r"|https://stock-picker.*"        # 커스텀 도메인 대비
+    ),
     allow_methods=["*"],
     allow_headers=["*"],
 )
